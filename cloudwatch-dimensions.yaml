@@ -1,0 +1,1179 @@
+# CloudWatch Dimensions Mapping for AWS Service Quotas
+# Based on AWS Quota 重点监控清单
+#
+# CloudWatch Metric: AWS/Usage / ResourceCount
+# 
+# ⚠️ 重要说明:
+# 1. 并非所有配额都有 CloudWatch 使用量指标
+# 2. EBS、S3、Lambda 等服务需要通过 API 调用获取使用量
+# 3. CloudWatch 指标可能有 5-15 分钟延迟
+#
+# ============================================================================
+# 配置格式说明
+# ============================================================================
+#
+# 每个配额可以配置以下字段:
+#
+# has_cloudwatch: true/false
+#   - true: 优先使用 CloudWatch AWS/Usage 指标
+#   - false: 使用 API 方法获取使用量
+#
+# metric_name: "ResourceCount"
+#   - CloudWatch 指标名称 (仅当 has_cloudwatch=true 时需要)
+#
+# dimensions: {}
+#   - CloudWatch 指标的维度 (仅当 has_cloudwatch=true 时需要)
+#
+# api_method: "DescribeVolumes"
+#   - AWS API 方法名称 (当 has_cloudwatch=false 时使用)
+#
+# params: {}
+#   - API 调用的参数，支持以下字段:
+#     - volume_type: 卷类型过滤 (gp2, gp3, io1, io2, st1, sc1)
+#     - filter: 通用过滤条件
+#     - calculation: 计算方式 (sum_size, sum_iops, count, etc.)
+#     - snapshot_type: 快照类型 (manual, automated)
+#     - endpoint_type: VPC 端点类型 (Interface, Gateway)
+#     - lb_type: 负载均衡器类型 (application, network)
+#
+# cache_ttl: 300
+#   - API 响应缓存时间 (秒)，默认 300 秒
+#
+# timeout: 15
+#   - API 调用超时时间 (秒)，默认 15 秒
+#
+# description: "配额描述"
+#   - 配额的说明文字
+#
+# ============================================================================
+# 配置示例
+# ============================================================================
+#
+# 示例 1: 使用 CloudWatch 指标
+# ec2:
+#   L-1216C47A:
+#     metric_name: "ResourceCount"
+#     dimensions:
+#       Type: "Resource"
+#       Resource: "vCPU"
+#       Service: "EC2"
+#       Class: "Standard/OnDemand"
+#     has_cloudwatch: true
+#     description: "Running On-Demand Standard instances vCPU usage"
+#
+# 示例 2: 使用 API 方法 - 简单计数
+# ebs:
+#   L-309BACF6:
+#     has_cloudwatch: false
+#     api_method: "DescribeSnapshots"
+#     params:
+#       filter: "owner-id=self"
+#       calculation: "count"
+#     cache_ttl: 600
+#     timeout: 20
+#     description: "EBS 快照数量"
+#
+# 示例 3: 使用 API 方法 - 求和计算
+# ebs:
+#   L-7A658B76:
+#     has_cloudwatch: false
+#     api_method: "DescribeVolumes"
+#     params:
+#       volume_type: "gp3"
+#       calculation: "sum_size"
+#     cache_ttl: 300
+#     timeout: 15
+#     description: "gp3 卷总存储容量 (GiB)"
+#
+# 示例 4: 使用 API 方法 - 带过滤的计数
+# vpc:
+#   L-29B6F2EB:
+#     has_cloudwatch: false
+#     api_method: "DescribeVpcEndpoints"
+#     params:
+#       endpoint_type: "Interface"
+#       calculation: "count"
+#     cache_ttl: 300
+#     timeout: 10
+#     description: "接口类型 VPC 端点数量"
+#
+# ============================================================================
+
+# ============================================================================
+# EC2 - Amazon Elastic Compute Cloud
+# ============================================================================
+ec2:
+  # On-Demand Standard Instances (vCPU)
+  L-1216C47A:
+    metric_name: "ResourceCount"
+    dimensions:
+      Type: "Resource"
+      Resource: "vCPU"
+      Service: "EC2"
+      Class: "Standard/OnDemand"
+    description: "Running On-Demand Standard instances vCPU usage"
+    has_cloudwatch: true
+
+  # On-Demand G and VT Instances (vCPU)
+  L-DB2E81BA:
+    metric_name: "ResourceCount"
+    dimensions:
+      Type: "Resource"
+      Resource: "vCPU"
+      Service: "EC2"
+      Class: "G/OnDemand"
+    description: "Running On-Demand G instances vCPU usage"
+    has_cloudwatch: true
+
+  # On-Demand P Instances (vCPU)
+  L-417A185B:
+    metric_name: "ResourceCount"
+    dimensions:
+      Type: "Resource"
+      Resource: "vCPU"
+      Service: "EC2"
+      Class: "P/OnDemand"
+    description: "Running On-Demand P instances vCPU usage"
+    has_cloudwatch: true
+
+  # Spot Standard Instances (vCPU)
+  L-34B43A08:
+    metric_name: "ResourceCount"
+    dimensions:
+      Type: "Resource"
+      Resource: "vCPU"
+      Service: "EC2"
+      Class: "Standard/Spot"
+    description: "Running Spot Standard instances vCPU usage"
+    has_cloudwatch: true
+
+  # Spot G and VT Instances (vCPU)
+  L-3819A6DF:
+    metric_name: "ResourceCount"
+    dimensions:
+      Type: "Resource"
+      Resource: "vCPU"
+      Service: "EC2"
+      Class: "G/Spot"
+    description: "Running Spot G instances vCPU usage"
+    has_cloudwatch: true
+
+  # Spot P5 Instances (vCPU)
+  L-C4BD4855:
+    metric_name: "ResourceCount"
+    dimensions:
+      Type: "Resource"
+      Resource: "vCPU"
+      Service: "EC2"
+      Class: "P5/Spot"
+    description: "Running Spot P5 instances vCPU usage"
+    has_cloudwatch: true
+
+  # Elastic IPs - 需要 API 调用
+  L-0263D0A3:
+    has_cloudwatch: false
+    api_method: "DescribeAddresses"
+    description: "需要通过 EC2 DescribeAddresses API 获取"
+
+  # VPN Connections - 需要 API 调用
+  L-3E6EC3A3:
+    has_cloudwatch: false
+    api_method: "DescribeVpnConnections"
+    description: "需要通过 EC2 DescribeVpnConnections API 获取"
+
+# ============================================================================
+# VPC - Amazon Virtual Private Cloud
+# ============================================================================
+# API 方法: DescribeVpcs, DescribeSubnets, DescribeNatGateways, 
+#          DescribeSecurityGroups, DescribeRouteTables, DescribeVpcEndpoints
+# 权限要求: ec2:Describe*
+# ============================================================================
+vpc:
+  # -------------------------------------------------------------------------
+  # VPC 基础配额 - VPC Base Quotas
+  # -------------------------------------------------------------------------
+  
+  L-F678F1CE:  # VPCs per Region
+    metric_name: "ResourceCount"
+    dimensions:
+      Type: "Resource"
+      Resource: "VPC"
+      Service: "VPC"
+      Class: "None"
+    has_cloudwatch: true
+    description: "每个区域的 VPC 数量 - 使用 CloudWatch AWS/Usage 指标"
+
+  # -------------------------------------------------------------------------
+  # 子网配额 - Subnet Quotas
+  # -------------------------------------------------------------------------
+  
+  L-407747CB:  # Subnets per VPC
+    has_cloudwatch: false
+    api_method: "DescribeSubnets"
+    params:
+      calculation: "count"
+      group_by: "vpc-id"
+    cache_ttl: 300
+    timeout: 10
+    description: "每个 VPC 的子网数量 - 通过 DescribeSubnets 按 VPC 分组统计"
+  
+  # -------------------------------------------------------------------------
+  # CIDR 配额 - CIDR Quotas
+  # -------------------------------------------------------------------------
+  
+  L-83CA0A9D:  # IPv4 CIDR blocks per VPC
+    has_cloudwatch: false
+    api_method: "DescribeVpcs"
+    params:
+      calculation: "count_cidr_blocks"
+    cache_ttl: 300
+    timeout: 10
+    description: "每个 VPC 的 IPv4 CIDR 块数量 - 通过 DescribeVpcs 统计 CidrBlockAssociationSet"
+  
+  # -------------------------------------------------------------------------
+  # NAT 网关配额 - NAT Gateway Quotas
+  # -------------------------------------------------------------------------
+  
+  L-FE5A380F:  # NAT gateways per Availability Zone
+    has_cloudwatch: false
+    api_method: "DescribeNatGateways"
+    params:
+      calculation: "count"
+      group_by: "availability-zone"
+      filter: "state=available"
+    cache_ttl: 300
+    timeout: 10
+    description: "每个可用区的 NAT 网关数量 - 通过 DescribeNatGateways 按 AZ 分组统计"
+  
+  # -------------------------------------------------------------------------
+  # 网关配额 - Gateway Quotas
+  # -------------------------------------------------------------------------
+  
+  L-A4707A72:  # Internet gateways per Region
+    has_cloudwatch: false
+    api_method: "DescribeInternetGateways"
+    params:
+      calculation: "count"
+    cache_ttl: 300
+    timeout: 10
+    description: "每个区域的互联网网关数量 - 通过 DescribeInternetGateways 统计"
+  
+  # -------------------------------------------------------------------------
+  # 路由表配额 - Route Table Quotas
+  # -------------------------------------------------------------------------
+  
+  L-589F43AA:  # Route tables per VPC
+    has_cloudwatch: false
+    api_method: "DescribeRouteTables"
+    params:
+      calculation: "count"
+      group_by: "vpc-id"
+    cache_ttl: 300
+    timeout: 10
+    description: "每个 VPC 的路由表数量 - 通过 DescribeRouteTables 按 VPC 分组统计"
+  
+  # -------------------------------------------------------------------------
+  # VPC 端点配额 - VPC Endpoint Quotas
+  # -------------------------------------------------------------------------
+  
+  L-29B6F2EB:  # Interface VPC endpoints per VPC
+    has_cloudwatch: false
+    api_method: "DescribeVpcEndpoints"
+    params:
+      endpoint_type: "Interface"
+      calculation: "count"
+      group_by: "vpc-id"
+    cache_ttl: 300
+    timeout: 10
+    description: "每个 VPC 的接口类型端点数量 - 通过 DescribeVpcEndpoints 过滤 VpcEndpointType=Interface"
+  
+  L-1B52E74A:  # Gateway VPC endpoints per Region
+    has_cloudwatch: false
+    api_method: "DescribeVpcEndpoints"
+    params:
+      endpoint_type: "Gateway"
+      calculation: "count"
+    cache_ttl: 300
+    timeout: 10
+    description: "每个区域的网关类型端点数量 - 通过 DescribeVpcEndpoints 过滤 VpcEndpointType=Gateway"
+  
+  # -------------------------------------------------------------------------
+  # VPC 对等连接配额 - VPC Peering Quotas
+  # -------------------------------------------------------------------------
+  
+  L-7E9ECCDB:  # Active VPC peering connections per VPC
+    has_cloudwatch: false
+    api_method: "DescribeVpcPeeringConnections"
+    params:
+      calculation: "count"
+      filter: "status-code=active"
+      group_by: "vpc-id"
+    cache_ttl: 300
+    timeout: 10
+    description: "每个 VPC 的活跃对等连接数量 - 通过 DescribeVpcPeeringConnections 过滤 active 状态"
+  
+  # -------------------------------------------------------------------------
+  # 安全组配额 - Security Group Quotas
+  # -------------------------------------------------------------------------
+  
+  L-E79EC296:  # Security groups per VPC
+    has_cloudwatch: false
+    api_method: "DescribeSecurityGroups"
+    params:
+      calculation: "count"
+      group_by: "vpc-id"
+    cache_ttl: 300
+    timeout: 10
+    description: "每个 VPC 的安全组数量 - 通过 DescribeSecurityGroups 按 VPC 分组统计"
+  
+  L-0EA8095F:  # Inbound or outbound rules per security group
+    has_cloudwatch: false
+    api_method: "DescribeSecurityGroups"
+    params:
+      calculation: "max_rules_per_group"
+    cache_ttl: 300
+    timeout: 10
+    description: "每个安全组的最大规则数 - 通过 DescribeSecurityGroups 统计 IpPermissions 和 IpPermissionsEgress"
+  
+  # -------------------------------------------------------------------------
+  # 网络接口配额 - Network Interface Quotas
+  # -------------------------------------------------------------------------
+  
+  L-2AFB9258:  # Security groups per network interface
+    has_cloudwatch: false
+    api_method: "DescribeNetworkInterfaces"
+    params:
+      calculation: "max_security_groups_per_eni"
+    cache_ttl: 300
+    timeout: 10
+    description: "每个网络接口的最大安全组数 - 通过 DescribeNetworkInterfaces 统计 Groups"
+  
+  # -------------------------------------------------------------------------
+  # 网络地址配额 - Network Address Quotas
+  # -------------------------------------------------------------------------
+  
+  L-BB24F6E5:  # Network Address Usage (IPv4 CIDR blocks per VPC)
+    has_cloudwatch: false
+    api_method: "DescribeVpcs"
+    params:
+      calculation: "count_ipv4_cidr_blocks"
+    cache_ttl: 300
+    timeout: 10
+    description: "每个 VPC 的 IPv4 CIDR 块使用量 - 通过 DescribeVpcs 统计"
+
+# ============================================================================
+# EBS - Amazon Elastic Block Store
+# ============================================================================
+# ⚠️ 所有 EBS 配额都没有 CloudWatch 指标
+# 需要通过 EC2 API 获取使用量
+#
+# API 方法: DescribeVolumes, DescribeSnapshots
+# 权限要求: ec2:DescribeVolumes, ec2:DescribeSnapshots
+# ============================================================================
+ebs:
+  # -------------------------------------------------------------------------
+  # 存储配额 - Storage Quotas
+  # -------------------------------------------------------------------------
+  
+  L-7A658B76:  # gp3 storage (TiB)
+    has_cloudwatch: false
+    api_method: "DescribeVolumes"
+    params:
+      volume_type: "gp3"
+      calculation: "sum_size"
+    cache_ttl: 300
+    timeout: 15
+    description: "gp3 卷总存储容量 (GiB) - 通过 DescribeVolumes 计算所有 gp3 卷的 Size 字段总和"
+  
+  L-D18FCD1D:  # gp2 storage (TiB)
+    has_cloudwatch: false
+    api_method: "DescribeVolumes"
+    params:
+      volume_type: "gp2"
+      calculation: "sum_size"
+    cache_ttl: 300
+    timeout: 15
+    description: "gp2 卷总存储容量 (GiB) - 通过 DescribeVolumes 计算所有 gp2 卷的 Size 字段总和"
+  
+  L-FD252861:  # io1 storage (TiB)
+    has_cloudwatch: false
+    api_method: "DescribeVolumes"
+    params:
+      volume_type: "io1"
+      calculation: "sum_size"
+    cache_ttl: 300
+    timeout: 15
+    description: "io1 卷总存储容量 (GiB) - 通过 DescribeVolumes 计算所有 io1 卷的 Size 字段总和"
+  
+  L-09BD8365:  # io2 storage (TiB)
+    has_cloudwatch: false
+    api_method: "DescribeVolumes"
+    params:
+      volume_type: "io2"
+      calculation: "sum_size"
+    cache_ttl: 300
+    timeout: 15
+    description: "io2 卷总存储容量 (GiB) - 通过 DescribeVolumes 计算所有 io2 卷的 Size 字段总和"
+  
+  L-82ACEF56:  # st1 storage (TiB)
+    has_cloudwatch: false
+    api_method: "DescribeVolumes"
+    params:
+      volume_type: "st1"
+      calculation: "sum_size"
+    cache_ttl: 300
+    timeout: 15
+    description: "st1 卷总存储容量 (GiB) - 通过 DescribeVolumes 计算所有 st1 卷的 Size 字段总和"
+  
+  L-17AF77E8:  # sc1 storage (TiB)
+    has_cloudwatch: false
+    api_method: "DescribeVolumes"
+    params:
+      volume_type: "sc1"
+      calculation: "sum_size"
+    cache_ttl: 300
+    timeout: 15
+    description: "sc1 卷总存储容量 (GiB) - 通过 DescribeVolumes 计算所有 sc1 卷的 Size 字段总和"
+  
+  # -------------------------------------------------------------------------
+  # IOPS 配额 - IOPS Quotas
+  # -------------------------------------------------------------------------
+  
+  L-8D977E7E:  # io2 IOPS
+    has_cloudwatch: false
+    api_method: "DescribeVolumes"
+    params:
+      volume_type: "io2"
+      calculation: "sum_iops"
+    cache_ttl: 300
+    timeout: 15
+    description: "io2 卷总 IOPS - 通过 DescribeVolumes 计算所有 io2 卷的 Iops 字段总和"
+  
+  L-B3A130E6:  # io1 IOPS
+    has_cloudwatch: false
+    api_method: "DescribeVolumes"
+    params:
+      volume_type: "io1"
+      calculation: "sum_iops"
+    cache_ttl: 300
+    timeout: 15
+    description: "io1 卷总 IOPS - 通过 DescribeVolumes 计算所有 io1 卷的 Iops 字段总和"
+  
+  # -------------------------------------------------------------------------
+  # 快照配额 - Snapshot Quotas
+  # -------------------------------------------------------------------------
+  
+  L-309BACF6:  # Snapshots per region
+    has_cloudwatch: false
+    api_method: "DescribeSnapshots"
+    params:
+      filter: "owner-id=self"
+      calculation: "count"
+    cache_ttl: 600
+    timeout: 20
+    description: "EBS 快照总数 - 通过 DescribeSnapshots 统计账户拥有的所有快照"
+  
+  # -------------------------------------------------------------------------
+  # 运行时配额 - Runtime Quotas (无法通过 API 获取)
+  # -------------------------------------------------------------------------
+  
+  L-39BD5252:  # Concurrent snapshot copy requests
+    has_cloudwatch: false
+    description: "并发快照复制请求数 - 运行时指标，无法通过 API 直接获取当前使用量"
+
+# ============================================================================
+# RDS - Amazon Relational Database Service
+# ============================================================================
+# API 方法: DescribeDBInstances, DescribeDBSubnetGroups, 
+#          DescribeDBClusterSnapshots, DescribeDBSecurityGroups
+# 权限要求: rds:DescribeDBInstances, rds:DescribeDBSubnetGroups,
+#          rds:DescribeDBClusterSnapshots, rds:DescribeDBSecurityGroups
+# ============================================================================
+rds:
+  # -------------------------------------------------------------------------
+  # 数据库实例配额 - DB Instance Quotas
+  # -------------------------------------------------------------------------
+  
+  L-7ADDB58A:  # Total storage for all DB instances (GiB)
+    has_cloudwatch: false
+    api_method: "DescribeDBInstances"
+    params:
+      calculation: "sum_allocated_storage"
+    cache_ttl: 300
+    timeout: 15
+    description: "所有数据库实例的总存储容量 (GiB) - 通过 DescribeDBInstances 计算所有实例的 AllocatedStorage 总和"
+  
+  L-272F1212:  # Read replicas per primary DB instance
+    has_cloudwatch: false
+    api_method: "DescribeDBInstances"
+    params:
+      calculation: "count_read_replicas"
+    cache_ttl: 300
+    timeout: 15
+    description: "只读副本数量 - 通过 DescribeDBInstances 统计具有 ReadReplicaDBInstanceIdentifiers 的实例"
+  
+  # -------------------------------------------------------------------------
+  # 子网组配额 - Subnet Group Quotas
+  # -------------------------------------------------------------------------
+  
+  L-48C6BF61:  # DB subnet groups
+    has_cloudwatch: false
+    api_method: "DescribeDBSubnetGroups"
+    params:
+      calculation: "count"
+    cache_ttl: 300
+    timeout: 10
+    description: "数据库子网组数量 - 通过 DescribeDBSubnetGroups 统计"
+  
+  # -------------------------------------------------------------------------
+  # 快照配额 - Snapshot Quotas
+  # -------------------------------------------------------------------------
+  
+  L-9B510759:  # Manual DB cluster snapshots
+    has_cloudwatch: false
+    api_method: "DescribeDBClusterSnapshots"
+    params:
+      snapshot_type: "manual"
+      calculation: "count"
+    cache_ttl: 600
+    timeout: 20
+    description: "手动集群快照数量 - 通过 DescribeDBClusterSnapshots 过滤 SnapshotType=manual"
+  
+  # -------------------------------------------------------------------------
+  # 安全组配额 - Security Group Quotas
+  # -------------------------------------------------------------------------
+  
+  L-732153D0:  # DB security groups
+    has_cloudwatch: false
+    api_method: "DescribeDBSecurityGroups"
+    params:
+      calculation: "count"
+    cache_ttl: 300
+    timeout: 10
+    description: "数据库安全组数量 - 通过 DescribeDBSecurityGroups 统计 (仅 EC2-Classic)"
+
+# ============================================================================
+# S3 - Amazon Simple Storage Service
+# ============================================================================
+# ⚠️ S3 配额没有 CloudWatch 指标
+s3:
+  L-349AD9CA:  # Replication transfer rate
+    has_cloudwatch: false
+    description: "需要通过 CloudWatch S3 Replication metrics 获取"
+  
+  L-1A9B467F:  # Replication destinations
+    has_cloudwatch: false
+    api_method: "GetBucketReplication"
+    description: "需要遍历所有桶的复制配置"
+
+# ============================================================================
+# ELB - Elastic Load Balancing
+# ============================================================================
+# API 方法: DescribeLoadBalancers, DescribeTargetGroups, DescribeRules,
+#          DescribeListenerCertificates
+# 权限要求: elasticloadbalancing:DescribeLoadBalancers,
+#          elasticloadbalancing:DescribeTargetGroups,
+#          elasticloadbalancing:DescribeRules,
+#          elasticloadbalancing:DescribeListenerCertificates
+# ============================================================================
+elasticloadbalancing:
+  # -------------------------------------------------------------------------
+  # 负载均衡器配额 - Load Balancer Quotas
+  # -------------------------------------------------------------------------
+  
+  L-53DA6B97:  # Application Load Balancers per Region
+    has_cloudwatch: false
+    api_method: "DescribeLoadBalancers"
+    params:
+      lb_type: "application"
+      calculation: "count"
+    cache_ttl: 300
+    timeout: 10
+    description: "应用负载均衡器 (ALB) 数量 - 通过 DescribeLoadBalancers 过滤 Type=application"
+  
+  L-69A177A2:  # Network Load Balancers per Region
+    has_cloudwatch: false
+    api_method: "DescribeLoadBalancers"
+    params:
+      lb_type: "network"
+      calculation: "count"
+    cache_ttl: 300
+    timeout: 10
+    description: "网络负载均衡器 (NLB) 数量 - 通过 DescribeLoadBalancers 过滤 Type=network"
+  
+  # -------------------------------------------------------------------------
+  # 目标组配额 - Target Group Quotas
+  # -------------------------------------------------------------------------
+  
+  L-B22855CB:  # Target groups per Region
+    has_cloudwatch: false
+    api_method: "DescribeTargetGroups"
+    params:
+      calculation: "count"
+    cache_ttl: 300
+    timeout: 10
+    description: "目标组总数 - 通过 DescribeTargetGroups 统计"
+  
+  # -------------------------------------------------------------------------
+  # 规则配额 - Rule Quotas
+  # -------------------------------------------------------------------------
+  
+  L-7EED9B64:  # Rules per Application Load Balancer
+    has_cloudwatch: false
+    api_method: "DescribeRules"
+    params:
+      calculation: "max_rules_per_alb"
+      group_by: "load-balancer-arn"
+    cache_ttl: 300
+    timeout: 10
+    description: "每个 ALB 的最大规则数 - 通过 DescribeRules 按负载均衡器分组统计"
+  
+  # -------------------------------------------------------------------------
+  # 证书配额 - Certificate Quotas
+  # -------------------------------------------------------------------------
+  
+  L-9365A611:  # Certificates per Application Load Balancer
+    has_cloudwatch: false
+    api_method: "DescribeListenerCertificates"
+    params:
+      calculation: "max_certificates_per_alb"
+      group_by: "listener-arn"
+    cache_ttl: 300
+    timeout: 10
+    description: "每个 ALB 的最大证书数 - 通过 DescribeListenerCertificates 按监听器分组统计"
+
+# ============================================================================
+# ECS - Amazon Elastic Container Service
+# ============================================================================
+ecs:
+  L-21C621EB:  # Clusters
+    has_cloudwatch: false
+    api_method: "ListClusters"
+  
+  # 操作速率类配额无法通过 API 获取当前使用量
+  # 这些是 API 限流配额，只能通过监控 API 错误来判断
+  L-1E6DEB89:  # Task definition modify - sustained
+    has_cloudwatch: false
+    description: "API 限流配额，无法获取当前使用量"
+  
+  L-CDF9F16B:  # Task definition modify - burst
+    has_cloudwatch: false
+    description: "API 限流配额，无法获取当前使用量"
+
+# ============================================================================
+# EKS - Amazon Elastic Kubernetes Service
+# ============================================================================
+eks:
+  L-1194D53C:  # Clusters
+    has_cloudwatch: false
+    api_method: "ListClusters"
+  
+  L-BD136A63:  # Nodes per managed node group
+    has_cloudwatch: false
+    api_method: "DescribeNodegroup"
+  
+  L-6D54EA21:  # Managed node groups per cluster
+    has_cloudwatch: false
+    api_method: "ListNodegroups"
+  
+  L-33415657:  # Fargate profiles
+    has_cloudwatch: false
+    api_method: "ListFargateProfiles"
+
+# ============================================================================
+# SageMaker - Amazon SageMaker
+# ============================================================================
+sagemaker:
+  L-F88776CD:  # Pipeline executions
+    has_cloudwatch: false
+    api_method: "ListPipelineExecutions"
+    description: "需要统计 InProgress 状态的 Pipeline"
+
+# ============================================================================
+# CloudWatch - Amazon CloudWatch
+# ============================================================================
+monitoring:
+  # API 速率配额无法通过 CloudWatch 获取
+  L-8BC498D4:  # PutMetricData rate
+    has_cloudwatch: false
+    description: "API 限流配额，通过监控 ThrottleException 判断"
+  
+  L-5E141212:  # GetMetricData rate
+    has_cloudwatch: false
+    description: "API 限流配额，通过监控 ThrottleException 判断"
+  
+  L-C1FE0F5C:  # Canary limit
+    has_cloudwatch: false
+    api_method: "DescribeCanaries"
+  
+  L-DBD11BCC:  # Contributor Insights rules
+    has_cloudwatch: false
+    api_method: "DescribeInsightRules"
+
+# ============================================================================
+# Route 53 - Amazon Route 53
+# ============================================================================
+route53:
+  L-740A4B31:  # Domains
+    has_cloudwatch: false
+    api_method: "ListDomains"
+  
+  L-9BABD1D7:  # VPC associations
+    has_cloudwatch: false
+    api_method: "ListVPCAssociationAuthorizations"
+  
+  L-94E19253:  # Resolver rule associations
+    has_cloudwatch: false
+    api_method: "ListResolverRuleAssociations"
+  
+  L-4A669CC0:  # Resolver endpoints
+    has_cloudwatch: false
+    api_method: "ListResolverEndpoints"
+
+# ============================================================================
+# ElastiCache - Amazon ElastiCache
+# ============================================================================
+elasticache:
+  L-DFE45DF3:  # Nodes per region
+    has_cloudwatch: false
+    api_method: "DescribeCacheClusters"
+    calculation: "count(CacheNodes)"
+  
+  L-AF354865:  # Nodes per cluster (Redis)
+    has_cloudwatch: false
+    api_method: "DescribeReplicationGroups"
+  
+  L-8C334AD1:  # Nodes per cluster (Memcached)
+    has_cloudwatch: false
+    api_method: "DescribeCacheClusters"
+  
+  L-BBCDAECC:  # Serverless caches
+    has_cloudwatch: false
+    api_method: "DescribeServerlessCaches"
+
+# ============================================================================
+# CloudFront - Amazon CloudFront
+# ============================================================================
+cloudfront:
+  # CloudFront 配额需要通过 API 获取
+  L-24B04930:  # Distributions
+    has_cloudwatch: false
+    api_method: "ListDistributions"
+  
+  L-A2C80159:  # Requests per second
+    has_cloudwatch: false
+    description: "通过 CloudWatch CloudFront metrics 获取实时请求速率"
+  
+  L-0F1E9017:  # Data transfer rate
+    has_cloudwatch: false
+    description: "通过 CloudWatch CloudFront metrics 获取传输速率"
+  
+  L-B4048FB4:  # Origins per distribution
+    has_cloudwatch: false
+    api_method: "GetDistributionConfig"
+  
+  L-F432D044:  # Cache behaviors
+    has_cloudwatch: false
+    api_method: "GetDistributionConfig"
+  
+  L-AAD4943E:  # CNAMEs
+    has_cloudwatch: false
+    api_method: "GetDistributionConfig"
+  
+  L-DA9DCC93:  # SSL certificates
+    has_cloudwatch: false
+    api_method: "ListDistributions"
+  
+  L-7D134442:  # Cache policies
+    has_cloudwatch: false
+    api_method: "ListCachePolicies"
+  
+  L-CF0D4FC5:  # Response headers policies
+    has_cloudwatch: false
+    api_method: "ListResponseHeadersPolicies"
+  
+  L-08884E5C:  # Origin access identities
+    has_cloudwatch: false
+    api_method: "ListCloudFrontOriginAccessIdentities"
+  
+  L-20E1C672:  # Continuous deployment policies
+    has_cloudwatch: false
+    api_method: "ListContinuousDeploymentPolicies"
+
+# ============================================================================
+# 总结
+# ============================================================================
+# 
+# 有 CloudWatch 指标的配额 (7个):
+# - EC2 vCPU (On-Demand 和 Spot 各种实例类型)
+# - VPC 数量
+#
+# 需要 API 调用的配额 (大部分):
+# - EBS 所有配额
+# - RDS 所有配额
+# - S3 所有配额
+# - ELB 所有配额
+# - ECS 所有配额
+# - EKS 所有配额
+# - 等等...
+#
+# 无法获取使用量的配额:
+# - API 速率限制类配额 (只能通过监控错误判断)
+# - 并发操作类配额 (运行时指标)
+
+
+# ============================================================================
+# 配置最佳实践 - Configuration Best Practices
+# ============================================================================
+#
+# 本节提供 API-based usage collection 的配置最佳实践和常见场景示例
+#
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# 1. 缓存 TTL 配置建议
+# ----------------------------------------------------------------------------
+#
+# 根据资源变化频率调整缓存时间：
+#
+# 频繁变化的资源 (2-5 分钟):
+#   - EC2 实例
+#   - Lambda 函数
+#   - 动态创建的资源
+#   cache_ttl: 180-300
+#
+# 中等变化的资源 (5-10 分钟):
+#   - EBS 卷
+#   - RDS 实例
+#   - 负载均衡器
+#   cache_ttl: 300-600
+#
+# 较少变化的资源 (10-15 分钟):
+#   - VPC 结构 (子网、路由表)
+#   - 安全组
+#   - VPC 端点
+#   cache_ttl: 600-900
+#
+# 很少变化的资源 (15-30 分钟):
+#   - EBS 快照
+#   - RDS 快照
+#   - 备份资源
+#   cache_ttl: 900-1800
+#
+# 示例:
+# ebs:
+#   L-7A658B76:  # gp3 volumes (中等变化)
+#     cache_ttl: 300
+#   L-309BACF6:  # Snapshots (很少变化)
+#     cache_ttl: 1800
+
+# ----------------------------------------------------------------------------
+# 2. 超时配置建议
+# ----------------------------------------------------------------------------
+#
+# 根据 API 响应时间和分页需求调整超时：
+#
+# 快速 API (5-10 秒):
+#   - 简单的 Describe 调用
+#   - 单页响应
+#   - 小数据集
+#   timeout: 5-10
+#
+# 标准 API (10-15 秒):
+#   - 可能需要分页的调用
+#   - 中等数据集
+#   - 带过滤条件的查询
+#   timeout: 10-15
+#
+# 慢速 API (15-30 秒):
+#   - 大数据集
+#   - 复杂过滤
+#   - 多页响应
+#   timeout: 15-30
+#
+# 示例:
+# vpc:
+#   L-29B6F2EB:  # VPC endpoints (快速)
+#     timeout: 10
+# ebs:
+#   L-7A658B76:  # Volumes (可能很多，需要分页)
+#     timeout: 20
+
+# ----------------------------------------------------------------------------
+# 3. 常见配置模式
+# ----------------------------------------------------------------------------
+
+# 模式 1: 简单计数
+# 适用于: 资源数量统计
+# 示例: 快照数量、实例数量、端点数量
+#
+# template:
+#   quota_code:
+#     has_cloudwatch: false
+#     api_method: "Describe<Resource>"
+#     params:
+#       calculation: "count"
+#     cache_ttl: 300
+#     timeout: 10
+
+# 模式 2: 带过滤的计数
+# 适用于: 特定类型资源的计数
+# 示例: gp3 卷数量、应用负载均衡器数量
+#
+# template:
+#   quota_code:
+#     has_cloudwatch: false
+#     api_method: "Describe<Resource>"
+#     params:
+#       <type>_type: "<value>"  # volume_type, lb_type, endpoint_type, etc.
+#       calculation: "count"
+#     cache_ttl: 300
+#     timeout: 10
+
+# 模式 3: 求和计算
+# 适用于: 容量、IOPS、存储等累加值
+# 示例: 总存储容量、总 IOPS
+#
+# template:
+#   quota_code:
+#     has_cloudwatch: false
+#     api_method: "Describe<Resource>"
+#     params:
+#       <type>_type: "<value>"
+#       calculation: "sum_<field>"  # sum_size, sum_iops, sum_allocated_storage
+#     cache_ttl: 300
+#     timeout: 15
+
+# 模式 4: 按区域/可用区分组
+# 适用于: 区域级别的配额
+# 示例: 每个可用区的 NAT 网关数量
+#
+# template:
+#   quota_code:
+#     has_cloudwatch: false
+#     api_method: "Describe<Resource>"
+#     params:
+#       group_by: "availability_zone"
+#       calculation: "count"
+#     cache_ttl: 300
+#     timeout: 10
+
+# ----------------------------------------------------------------------------
+# 4. 性能优化建议
+# ----------------------------------------------------------------------------
+
+# 优化 1: 使用合适的缓存 TTL
+# - 减少 API 调用次数
+# - 降低成本
+# - 提高响应速度
+# 建议: 根据资源变化频率设置，默认 5 分钟
+
+# 优化 2: 调整 Prometheus scrape interval
+# - 配合缓存 TTL 使用
+# - 避免频繁的无效 scrape
+# 建议: scrape_interval >= cache_ttl / 2
+
+# 优化 3: 监控 API 调用指标
+# - quota_exporter_api_calls_total
+# - quota_exporter_api_call_duration_seconds
+# - quota_exporter_cache_hit_ratio
+# 建议: 设置告警，cache hit ratio < 0.5 时调查
+
+# 优化 4: 合理设置并发限制
+# - 默认 10 个并发 API 调用
+# - 根据 AWS 账户限制调整
+# - 监控 throttling 错误
+# 建议: 如果频繁 throttling，降低并发数
+
+# ----------------------------------------------------------------------------
+# 5. 故障排查配置
+# ----------------------------------------------------------------------------
+
+# 问题: 使用量显示为 0
+# 检查清单:
+# 1. has_cloudwatch 是否正确设置为 false
+# 2. api_method 是否正确
+# 3. IAM 权限是否包含对应的 Describe* 权限
+# 4. 日志中是否有错误信息
+# 5. 手动测试 API 调用是否成功
+
+# 问题: API 调用频繁失败
+# 检查清单:
+# 1. 网络连接是否正常
+# 2. IAM 权限是否正确
+# 3. 是否遇到 API rate limiting
+# 4. timeout 是否足够
+# 5. 区域配置是否正确
+
+# 问题: 性能问题
+# 检查清单:
+# 1. cache_ttl 是否太短
+# 2. timeout 是否太长
+# 3. 并发数是否太高
+# 4. 监控的配额数量是否太多
+# 5. API 响应时间是否正常
+
+# ----------------------------------------------------------------------------
+# 6. 安全最佳实践
+# ----------------------------------------------------------------------------
+
+# 1. 使用最小权限原则
+#    - 只授予必要的 Describe* 权限
+#    - 不要使用 * 通配符
+#    - 定期审查权限
+
+# 2. 使用 IAM 角色而非访问密钥
+#    - EC2: 使用 Instance Profile
+#    - ECS: 使用 Task Role
+#    - Lambda: 使用 Execution Role
+
+# 3. 启用 CloudTrail 审计
+#    - 记录所有 API 调用
+#    - 监控异常访问模式
+#    - 设置告警
+
+# 4. 定期轮换凭证
+#    - 如果使用访问密钥，定期轮换
+#    - 使用 AWS Secrets Manager 管理密钥
+#    - 监控密钥使用情况
+
+# ----------------------------------------------------------------------------
+# 7. 成本优化建议
+# ----------------------------------------------------------------------------
+
+# API 调用成本估算:
+# - 大多数 Describe API: ~$0.01 / 1000 次调用
+# - 使用缓存可减少 80-90% 的调用
+# - 预期成本: < $0.01/天/配额
+
+# 成本优化策略:
+# 1. 增加 cache_ttl (在可接受的延迟范围内)
+# 2. 增加 Prometheus scrape_interval
+# 3. 只监控关键配额
+# 4. 使用区域级别的配额而非资源级别
+# 5. 监控 API 调用次数指标
+
+# 示例成本计算:
+# - 10 个配额
+# - 60 秒 scrape interval
+# - 5 分钟 cache TTL
+# - 90% cache hit rate
+# 
+# 每天 API 调用次数:
+# = 10 配额 × (24×60÷5) 次/天 × 10% (cache miss)
+# = 10 × 288 × 0.1
+# = 288 次/天
+# 
+# 每月成本:
+# = 288 × 30 ÷ 1000 × $0.01
+# = $0.09/月
+
+# ----------------------------------------------------------------------------
+# 8. 监控和告警建议
+# ----------------------------------------------------------------------------
+
+# 推荐的 Prometheus 告警规则:
+
+# 告警 1: API 错误率过高
+# alert: HighAPIErrorRate
+# expr: |
+#   sum(rate(quota_exporter_api_call_errors_total[5m])) 
+#   / 
+#   sum(rate(quota_exporter_api_calls_total[5m])) 
+#   > 0.1
+# for: 5m
+# severity: warning
+
+# 告警 2: 缓存命中率过低
+# alert: LowCacheHitRate
+# expr: |
+#   quota_exporter_cache_hits_total 
+#   / 
+#   (quota_exporter_cache_hits_total + quota_exporter_cache_misses_total) 
+#   < 0.5
+# for: 10m
+# severity: info
+
+# 告警 3: API 调用延迟过高
+# alert: HighAPILatency
+# expr: |
+#   histogram_quantile(0.95, 
+#     rate(quota_exporter_api_call_duration_seconds_bucket[5m])
+#   ) > 10
+# for: 5m
+# severity: warning
+
+# 告警 4: API throttling 频繁
+# alert: FrequentAPIThrottling
+# expr: |
+#   sum(rate(quota_exporter_api_call_errors_total{error_type="throttling"}[5m])) 
+#   > 0.1
+# for: 5m
+# severity: warning
+
+# ----------------------------------------------------------------------------
+# 9. 完整配置示例
+# ----------------------------------------------------------------------------
+
+# 示例 1: EBS gp3 卷存储 (生产环境推荐配置)
+# ebs:
+#   L-7A658B76:
+#     has_cloudwatch: false
+#     api_method: "DescribeVolumes"
+#     params:
+#       volume_type: "gp3"
+#       calculation: "sum_size"
+#     cache_ttl: 300        # 5 分钟，平衡新鲜度和性能
+#     timeout: 15           # 足够处理分页
+#     description: "gp3 卷总存储容量 (GiB)"
+
+# 示例 2: VPC 接口端点 (低变化率资源)
+# vpc:
+#   L-29B6F2EB:
+#     has_cloudwatch: false
+#     api_method: "DescribeVpcEndpoints"
+#     params:
+#       endpoint_type: "Interface"
+#       calculation: "count"
+#     cache_ttl: 900        # 15 分钟，VPC 端点变化不频繁
+#     timeout: 10           # 快速 API
+#     description: "接口类型 VPC 端点数量"
+
+# 示例 3: RDS 总存储 (需要聚合计算)
+# rds:
+#   L-952B80B8:
+#     has_cloudwatch: false
+#     api_method: "DescribeDBInstances"
+#     params:
+#       calculation: "sum_allocated_storage"
+#     cache_ttl: 300        # 5 分钟
+#     timeout: 20           # 可能有很多实例
+#     description: "所有 RDS 实例的总存储 (GiB)"
+
+# 示例 4: EBS 快照 (低变化率，长缓存)
+# ebs:
+#   L-309BACF6:
+#     has_cloudwatch: false
+#     api_method: "DescribeSnapshots"
+#     params:
+#       filter: "owner-id=self"
+#       calculation: "count"
+#     cache_ttl: 1800       # 30 分钟，快照创建不频繁
+#     timeout: 30           # 可能有大量快照
+#     description: "EBS 快照数量"
+
+# ============================================================================
+# 更多信息
+# ============================================================================
+#
+# 详细文档:
+# - API_USAGE_COLLECTION.md - API-based usage collection 完整指南
+# - CLOUDWATCH_USAGE_METRICS.md - CloudWatch 指标参考
+# - PERFORMANCE_OPTIMIZATION.md - 性能优化指南
+# - README.md - 主文档和快速开始
+#
+# 故障排查:
+# - 参见 API_USAGE_COLLECTION.md 的 Troubleshooting 章节
+# - 参见 CLOUDWATCH_USAGE_METRICS.md 的故障排查章节
+#
+# ============================================================================

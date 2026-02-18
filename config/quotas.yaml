@@ -1,0 +1,234 @@
+# Predefined Service Quotas Configuration
+# Based on AWS Quota 重点监控清单
+# This file defines which quotas to monitor for each service
+
+aws:
+  # ============================================================================
+  # EC2 - Amazon Elastic Compute Cloud
+  # ============================================================================
+  ec2:
+    # 计算容量 - On-Demand Instances
+    - quota_code: L-1216C47A
+      quota_name: "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances"
+      description: "最常见、最核心的配额限制点 - 通用实例 vCPU"
+      priority: high
+    
+    - quota_code: L-DB2E81BA
+      quota_name: "Running On-Demand G and VT instances"
+      description: "GPU 实例配额 - AI 推理/图像处理任务"
+      priority: high
+    
+    - quota_code: L-417A185B
+      quota_name: "Running On-Demand P instances"
+      description: "P 系列 GPU 实例 - AI 训练"
+      priority: high
+    
+    # 弹性容量 - Spot Instances
+    - quota_code: L-34B43A08
+      quota_name: "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests"
+      description: "Spot 容量 - Auto Scaling/Batch/EMR"
+      priority: high
+    
+    - quota_code: L-3819A6DF
+      quota_name: "All G and VT Spot Instance Requests"
+      description: "GPU Spot 作业 - 训练/推理降本"
+      priority: high
+    
+    - quota_code: L-C4BD4855
+      quota_name: "All P5 Spot Instance Requests"
+      description: "P 系列 GPU Spot - ML 训练集群"
+      priority: high
+    
+    # 网络资源
+    - quota_code: L-0263D0A3
+      quota_name: "EC2-VPC Elastic IPs"
+      description: "弹性 IP 地址数量"
+      priority: medium
+    
+    # VPN/混合网络
+    - quota_code: L-3E6EC3A3
+      quota_name: "VPN connections per region"
+      description: "VPN 连接数 - 混合云通信"
+      priority: medium
+
+  # ============================================================================
+  # EBS - Amazon Elastic Block Store
+  # ============================================================================
+  ebs:
+    # 存储容量
+    - quota_code: L-7A658B76
+      quota_name: "Storage for General Purpose SSD (gp3) volumes, in TiB"
+      description: "gp3 卷总容量 - 主流系统盘"
+      priority: high
+    
+    - quota_code: L-D18FCD1D
+      quota_name: "Storage for General Purpose SSD (gp2) volumes, in TiB"
+      description: "gp2 卷总容量 - 主流系统盘"
+      priority: high
+    
+    - quota_code: L-FD252861
+      quota_name: "Storage for Provisioned IOPS SSD (io1) volumes, in TiB"
+      description: "io1 高性能卷 - 数据库关键业务"
+      priority: high
+    
+    - quota_code: L-09BD8365
+      quota_name: "Storage for Provisioned IOPS SSD (io2) volumes, in TiB"
+      description: "io2 高性能卷 - 数据库关键业务"
+      priority: high
+    
+    - quota_code: L-82ACEF56
+      quota_name: "Storage for Throughput Optimized HDD (st1) volumes, in TiB"
+      description: "st1 大容量归档 - 大数据/日志"
+      priority: medium
+    
+    - quota_code: L-17AF77E8
+      quota_name: "Storage for Cold HDD (sc1) volumes, in TiB"
+      description: "sc1 冷存储 - 归档数据"
+      priority: medium
+    
+    # IOPS 类
+    - quota_code: L-8D977E7E
+      quota_name: "IOPS for Provisioned IOPS SSD (io2) volumes"
+      description: "io2 总 IOPS"
+      priority: high
+    
+    - quota_code: L-B3A130E6
+      quota_name: "IOPS for Provisioned IOPS SSD (io1) volumes"
+      description: "io1 总 IOPS"
+      priority: high
+    
+    # 快照类
+    - quota_code: L-309BACF6
+      quota_name: "Snapshots per Region"
+      description: "快照数量 - 影响备份任务"
+      priority: high
+
+  # ============================================================================
+  # ELB - Elastic Load Balancing
+  # ============================================================================
+  elasticloadbalancing:
+    # ALB 数量
+    - quota_code: L-53DA6B97
+      quota_name: "Application Load Balancers per Region"
+      description: "ALB 数量 - 多环境部署"
+      priority: high
+    
+    # NLB 数量
+    - quota_code: L-69A177A2
+      quota_name: "Network Load Balancers per Region"
+      description: "NLB 数量 - 高性能负载均衡"
+      priority: high
+    
+    # 目标组
+    - quota_code: L-B22855CB
+      quota_name: "Target Groups per Region"
+      description: "目标组数量 - 微服务架构"
+      priority: high
+
+  # ============================================================================
+  # EKS - Amazon Elastic Kubernetes Service
+  # ============================================================================
+  eks:
+    # 集群规模
+    - quota_code: L-1194D53C
+      quota_name: "Clusters"
+      description: "EKS 集群数量 - 多环境部署"
+      priority: high
+    
+    # 节点组扩展
+    - quota_code: L-BD136A63
+      quota_name: "Nodes per managed node group"
+      description: "托管节点组最大节点数 - 横向扩展"
+      priority: high
+    
+    # 节点组数量
+    - quota_code: L-6D54EA21
+      quota_name: "Managed node groups per cluster"
+      description: "每集群托管节点组数 - 多 AZ 设计"
+      priority: high
+
+  # ============================================================================
+  # SageMaker - Amazon SageMaker (使用 Discovery 模式)
+  # ============================================================================
+  sagemaker:
+    # Discovery 配置：通过 ListServiceQuotas API 动态发现配额
+    # 使用模糊匹配规则匹配配额名称
+    discovery:
+      enabled: true
+      match_rules:
+        # 匹配包含以下关键词的配额名称
+        - name_contains: ["notebook instance usage"]
+        - name_contains: ["training job usage"]
+        - name_contains: ["endpoint usage"]
+      # 所有匹配到的配额使用相同的优先级
+      default_priority: high
+
+  # ============================================================================
+  # Route 53 - Amazon Route 53
+  # ============================================================================
+  route53:
+    # 域名数量限制（注册域名）
+    - quota_code: L-F767CB15
+      quota_name: "Domain count limit"
+      description: "域名数量限制（通过Route53注册的域名）"
+      priority: high
+    # Hosted Zones 数量限制（托管域名）
+    - quota_code: L-4EA4796A
+      quota_name: "Hosted zones"
+      description: "每个账户可创建的托管区域（Hosted Zones）数量限制"
+      priority: high
+
+  # ============================================================================
+  # ElastiCache - Amazon ElastiCache
+  # ============================================================================
+  elasticache:
+    # 缓存容量
+    - quota_code: L-DFE45DF3
+      quota_name: "Nodes per Region"
+      description: "节点总数 - 核心配额"
+      priority: high
+    
+    # Redis Cluster 模式
+    - quota_code: L-AF354865
+      quota_name: "Nodes per cluster (cluster mode enabled)"
+      description: "Redis 集群节点数 - 水平扩展"
+      priority: high
+    
+    # Memcached
+    - quota_code: L-8C334AD1
+      quota_name: "Nodes per cluster (Memcached)"
+      description: "Memcached 集群节点数"
+      priority: medium
+    
+    # Serverless
+    - quota_code: L-BBCDAECC
+      quota_name: "Serverless Caches per Region"
+      description: "Serverless Cache 实例数"
+      priority: medium
+
+  # ============================================================================
+  # CloudFront - Amazon CloudFront (全局服务，固定 us-east-1)
+  # ============================================================================
+  cloudfront:
+    # 分配管理
+    - quota_code: L-24B04930
+      quota_name: "Web distributions per AWS account"
+      description: "CloudFront 分配数量"
+      priority: high
+    
+    # 策略数量
+    - quota_code: L-7D134442
+      quota_name: "Cache policies per AWS account"
+      description: "缓存策略总数"
+      priority: medium
+    
+    - quota_code: L-CF0D4FC5
+      quota_name: "Response headers policies"
+      description: "响应头策略数 - CORS 配置"
+      priority: medium
+    
+    # 访问控制
+    - quota_code: L-08884E5C
+      quota_name: "Origin access identities per account"
+      description: "私有 S3 源访问身份数"
+      priority: medium

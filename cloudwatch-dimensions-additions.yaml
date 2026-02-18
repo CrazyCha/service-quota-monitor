@@ -1,0 +1,73 @@
+# 添加到 cloudwatch-dimensions.yaml 的缺失配额配置
+
+# VPC - IPv6 CIDR blocks
+vpc:
+  L-085A6257:  # IPv6 CIDR blocks per VPC
+    has_cloudwatch: false
+    api_method: "DescribeVpcs"
+    params:
+      calculation: "count_ipv6_cidr_blocks"
+    cache_ttl: 300
+    timeout: 10
+    description: "每个 VPC 的 IPv6 CIDR 块数量"
+
+# EBS - Concurrent copy operations (runtime metric, cannot be collected via API)
+ebs:
+  L-39BD5252:  # Max concurrent copy volume operations
+    has_cloudwatch: false
+    description: "并发快照复制请求数 - 运行时指标，无法通过 API 直接获取当前使用量"
+
+# S3 - Replication transfer rate (CloudWatch metric)
+s3:
+  L-349AD9CA:  # Replication transfer rate
+    has_cloudwatch: false
+    description: "复制传输速率 - 需要通过 CloudWatch 指标获取，暂不支持"
+
+# EKS - Advanced quotas
+eks:
+  L-D78D8AF8:  # Selectors per Fargate profile
+    has_cloudwatch: false
+    api_method: "DescribeFargateProfile"
+    params:
+      calculation: "max_selectors"
+    cache_ttl: 300
+    timeout: 15
+    description: "每个 Fargate profile 的 selector 数量"
+
+  L-5C12D558:  # Remote node networks per cluster
+    has_cloudwatch: false
+    api_method: "DescribeCluster"
+    params:
+      calculation: "count_remote_node_networks"
+    cache_ttl: 300
+    timeout: 15
+    description: "每个集群的远程节点网络数量"
+
+  L-6AFFD1D8:  # Remote pod networks per cluster
+    has_cloudwatch: false
+    api_method: "DescribeCluster"
+    params:
+      calculation: "count_remote_pod_networks"
+    cache_ttl: 300
+    timeout: 15
+    description: "每个集群的远程 Pod 网络数量"
+
+# CloudWatch Monitoring - Rate limits (cannot be collected)
+monitoring:
+  L-8BC498D4:  # Rate of PutMetricData requests
+    has_cloudwatch: false
+    description: "PutMetricData 请求速率 - 运行时指标，无法通过 API 获取"
+
+  L-5E141212:  # Rate of GetMetricData requests
+    has_cloudwatch: false
+    description: "GetMetricData 请求速率 - 运行时指标，无法通过 API 获取"
+
+# CloudFront - Performance metrics (cannot be collected)
+cloudfront:
+  L-A2C80159:  # Requests per second per distribution
+    has_cloudwatch: false
+    description: "每个分发的每秒请求数 - 运行时指标，需要通过 CloudWatch 获取"
+
+  L-0F1E9017:  # Data transfer rate per distribution
+    has_cloudwatch: false
+    description: "每个分发的数据传输速率 - 运行时指标，需要通过 CloudWatch 获取"
